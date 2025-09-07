@@ -1,0 +1,174 @@
+!================================================
+! CONFIGURACIONES BASADAS EN TOPOLOGÍA PACKET TRACER
+! GRUPO ARRIETA - RED EMPRESARIAL NACIONAL
+!================================================
+
+!================================================
+! ROUTER CORE TEGUCIGALPA (R-TEGUCIGALPA)
+!================================================
+
+En
+Conf t
+hostname R-TEGUCIGALPA
+Ipv6 unicast-routing
+banner motd # GRUPO ARRIETA TEGUCIGALPA - SOLO ACCESO AUTORIZADO #
+
+Ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+crypto key generate rsa general-keys modulus 1024
+
+line vty 0 15 
+login local
+line con 0
+login local
+ 
+transport input all 
+exit
+
+! Interface hacia SAN PEDRO SULA (Enlace Principal)
+interface Serial0/2/0
+ description ENLACE-PRINCIPAL-TGU-SPS
+ Ip address 192.168.202.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1001::1/64 -----------------
+ no shutdown
+
+! Interface hacia LA CEIBA
+interface Serial0/1/1
+ description ENLACE-TGU-LA-CEIBA
+ ip address 192.168.201.9 255.255.255.252
+ ipv6 address 2001:db8:a000:1003::1/64 -----------------
+ no shutdown
+
+! Interface hacia CHOLUTECA
+interface Serial0/2/0
+ description ENLACE-TGU-CHOLUTECA
+ ip address 10.1.4.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1004::1/64 -----------------
+ clock rate 2000000
+ no shutdown
+
+! Interface hacia COMAYAGUA
+interface Serial0/2/1
+ description ENLACE-TGU-COMAYAGUA
+ ip address 10.1.5.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1005::1/64 -----------------
+ clock rate 2000000
+ no shutdown
+
+! Interface hacia SANTA ROSA DE COPAN
+interface Serial0/3/0
+ description ENLACE-TGU-COPAN
+ ip address 10.1.6.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1006::1/64 -----------------
+ clock rate 2000000
+ no shutdown
+
+! Interface LAN hacia Switch Core Tegucigalpa
+interface GigabitEthernet0/0
+ description CONEXION-SWITCH-CORE-TGU
+ ip address 192.168.1.1 255.255.255.252
+ ipv6 address 2001:db8:a000:fff1::1/64
+ no shutdown
+
+! OSPF Configuration - Backbone con SPS
+router ospf 1
+ router-id 1.1.1.1
+ network 1.1.1.1 0.0.0.0 area 0
+ network 10.1.1.0 0.0.0.3 area 0
+ network 192.168.1.0 0.0.0.3 area 0
+ passive-interface Loopback0
+
+! EIGRP AS 100 - Sucursales Norte (La Ceiba, Copán)
+router eigrp 100
+ network 10.1.3.0 0.0.0.3
+ network 10.1.6.0 0.0.0.3
+ no auto-summary
+ eigrp router-id 1.1.1.1
+
+! EIGRP AS 200 - Sucursales Sur (Choluteca, Comayagua)
+router eigrp 200
+ network 10.1.4.0 0.0.0.3
+ network 10.1.5.0 0.0.0.3
+ no auto-summary
+ eigrp router-id 1.1.1.1
+
+! IPv6 Configuration
+ipv6 unicast-routing
+ipv6 router ospf 1
+ router-id 1.1.1.1
+
+ipv6 router eigrp 100
+ eigrp router-id 1.1.1.1
+ no shutdown
+
+ipv6 router eigrp 200
+ eigrp router-id 1.1.1.1
+ no shutdown
+
+! Apply IPv6 routing protocols to interfaces
+interface Serial0/1/0
+ ipv6 ospf 1 area 0
+interface Serial0/1/1
+ ipv6 eigrp 100
+interface Serial0/2/0
+ ipv6 eigrp 200
+interface Serial0/2/1
+ ipv6 eigrp 200
+interface Serial0/3/0
+ ipv6 eigrp 100
+interface GigabitEthernet0/0
+ ipv6 ospf 1 area 0
+
+! Static Routes de Backup hacia SPS
+ip route 192.168.200.0 255.255.255.0 10.1.1.2 200
+ip route 0.0.0.0 0.0.0.0 10.1.1.2 250
+ipv6 route 2001:db8:a000:200::/64 2001:db8:a000:1001::2 200
+
+! DHCP Pools para VLANs Tegucigalpa
+ip dhcp excluded-address 192.168.10.1 192.168.10.10
+ip dhcp excluded-address 192.168.20.1 192.168.20.10
+ip dhcp excluded-address 192.168.30.1 192.168.30.10
+ip dhcp excluded-address 192.168.40.1 192.168.40.10
+
+ip dhcp pool VLAN10-ADMINISTRACION
+ network 192.168.10.0 255.255.255.192
+ default-router 192.168.10.1
+ dns-server 192.168.10.5 8.8.8.8
+ domain-name arrieta.local
+ lease 7
+
+ip dhcp pool VLAN20-LOGISTICA
+ network 192.168.20.0 255.255.255.128
+ default-router 192.168.20.1
+ dns-server 192.168.10.5 8.8.8.8
+ domain-name arrieta.local
+ lease 7
+
+ip dhcp pool VLAN30-TECNOLOGIA
+ network 192.168.30.0 255.255.255.192
+ default-router 192.168.30.1
+ dns-server 192.168.10.5 8.8.8.8
+ domain-name arrieta.local
+ lease 3
+
+ip dhcp pool VLAN40-SOPORTE
+ network 192.168.40.0 255.255.255.192
+ default-router 192.168.40.1
+ dns-server 192.168.10.5 8.8.8.8
+ domain-name arrieta.local
+ lease 7
+
+! Security Configuration
+access-list 10 permit 192.168.99.0 0.0.0.15
+access-list 10 permit 192.168.10.0 0.0.0.63
+
+line con 0
+ password 7 060506324F41584B564058
+ login
+ exec-timeout 10 0
+
+line vty 0 15
+ access-class 10 in
+ transport input ssh
+ login local
+ exec-timeout 10 0

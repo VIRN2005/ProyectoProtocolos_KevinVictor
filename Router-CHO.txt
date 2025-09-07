@@ -1,0 +1,36 @@
+!================================================
+! ROUTER CHOLUTECA (R-CHOLUTECA)
+!================================================
+
+En
+Conf t
+hostname R-CHOLUTECA
+Ipv6 unicast-routing
+banner motd # GRUPO ARRIETA CHOLUTECA - SOLO ACCESO AUTORIZADO #
+
+Ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+crypto key generate rsa general-keys modulus 1024
+
+line vty 0 15 
+login local
+line con 0
+login local
+ 
+transport input all 
+exit
+
+interface Serial0/0/0
+ description WAN-CHOLUTECA-TGU
+ ip address 192.168.201.2 255.255.255.252 
+ ipv6 address 2001:db8:201:2::2/64
+ no shutdown
+
+interface GigabitEthernet0/0
+ description LAN-CHOLUTECA
+ ip address 192.168.2.1 255.255.255.0
+ ipv6 address 2001:db8:3000:2::1/64
+ no shutdown
+
+end
+copy running-config startup-config

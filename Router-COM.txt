@@ -1,0 +1,42 @@
+!================================================
+! ROUTER COMAYAGUA (R-COMAYAGUA)
+!================================================
+
+En
+Conf t
+hostname R-COMAYAGUA
+Ipv6 unicast-routing
+banner motd # GRUPO ARRIETA COMAYAGUA - SOLO ACCESO AUTORIZADO #
+
+Ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+crypto key generate rsa general-keys modulus 1024
+
+line vty 0 15 
+login local
+line con 0
+login local
+ 
+transport input all 
+exit
+
+interface Serial0/0/0
+ description WAN-COMAYAGUA-TGU
+ ip address 192.168.200.2 255.255.255.252
+ ipv6 address 2001:db8:200:1::2/64
+ no shutdown
+
+interface Serial0/0/1
+description WAN-COMAYAGUA-DCRESPALDO
+ ip address 192.168.200.6 255.255.255.252 
+ ipv6 address 2001:db8:200:2::2/64
+ no shutdown
+
+interface GigabitEthernet0/0
+ description LAN-COMAYAGUA
+ ip address 192.168.1.1 255.255.255.0
+ ipv6 address 2001:db8:3000:1::1/64
+ no shutdown 
+
+end
+copy running-config startup-config
