@@ -25,12 +25,21 @@ interface Serial0/0/0
  ip address 192.168.203.2 255.255.255.252 
  ipv6 address 2001:db8:203:1::2/64
  no shutdown
+ exit
+
+interface Serial0/0/1
+description WAN-COMAYAGUA-DCRESPALDO
+ ip address 192.168.203.6 255.255.255.252 
+ ipv6 address 2001:db8:203:2::2/64
+ no shutdown
+ exit
 
 interface GigabitEthernet0/0
  description LAN-COPAN
  ip address 192.168.4.1 255.255.255.0
  ipv6 address 2001:db8:3000:4::1/64
  no shutdown
+ exit
 
 end
 copy running-config startup-config

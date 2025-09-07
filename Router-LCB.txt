@@ -1,12 +1,12 @@
 !================================================
-! ROUTER CHOLUTECA (R-CHOLUTECA)
+! ROUTER LA CEIBA (R-LA-CEIBA)
 !================================================
 
 En
 Conf t
-hostname R-CHOLUTECA
+hostname R-LA-CEIBA
 Ipv6 unicast-routing
-banner motd # GRUPO ARRIETA CHOLUTECA - SOLO ACCESO AUTORIZADO #
+banner motd # GRUPO ARRIETA LA CEIBA - SOLO ACCESO AUTORIZADO #
 
 Ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
@@ -21,23 +21,23 @@ transport input all
 exit
 
 interface Serial0/0/0
- description WAN-CHOLUTECA-TGU
- ip address 192.168.201.2 255.255.255.252 
- ipv6 address 2001:db8:201:2::2/64
+ description  ENLACE-LA-CEIBA-TGU
+ ip address 192.168.204.2 255.255.255.252 
+ ipv6 address 2001:db8:204:1::2/64 
  no shutdown
  exit
 
 interface Serial0/0/1
-description WAN-CHOLUTECA-DCRESPALDO
- ip address 192.168.200.6 255.255.255.252 
- ipv6 address 2001:db8:201:2::2/64
+description WAN-LA-CEIBA-DCRESPALDO
+ ip address 192.168.204.6 255.255.255.252 
+ ipv6 address 2001:db8:204:2::2/64
  no shutdown
  exit
 
 interface GigabitEthernet0/0
- description LAN-CHOLUTECA
- ip address 192.168.201.6 255.255.255.0
- ipv6 address 2001:db8:3000:2::1/64
+ description LAN-LA-CEIBA
+ ip address 192.168.5.1 255.255.255.0
+ ipv6 address 2001:db8:3000:5::1/64
  no shutdown
  exit
 
