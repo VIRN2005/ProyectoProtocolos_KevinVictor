@@ -13,17 +13,16 @@ username admin privilege 15 secret Arrieta2025
 crypto key generate rsa general-keys modulus 1024
 
 line vty 0 15 
-login local
+login local 
+transport input all 
 line con 0
 login local
- 
-transport input all 
 exit
 
 interface Serial0/0/0
  description WAN-CHOLUTECA-TGU
  ip address 192.168.201.2 255.255.255.252 
- ipv6 address 2001:db8:201:2::2/64
+ ipv6 address 2001:db8:201:1::2/64
  no shutdown
  exit
 

@@ -17,12 +17,12 @@ username admin privilege 15 secret Arrieta2025
 crypto key generate rsa general-keys modulus 1024
 
 line vty 0 15 
-login local
+login local 
+transport input all 
 line con 0
 login local
- 
-transport input all 
 exit
+
 
 ! Interface hacia SPS
 interface Serial0/2/0
