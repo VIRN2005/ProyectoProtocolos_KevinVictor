@@ -1,0 +1,64 @@
+!================================================
+! GRUPO ARRIETA - RED EMPRESARIAL NACIONAL
+!================================================
+
+!================================================
+! ROUTER CORE TEGUCIGALPA (R-SPS-RESPALDO)
+!================================================
+
+En
+Conf t
+hostname R-SPS-RESPALDO
+Ipv6 unicast-routing
+banner motd # GRUPO ARRIETA SPS-RESPALDO - SOLO ACCESO AUTORIZADO #
+
+Ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+crypto key generate rsa general-keys modulus 1024
+
+line vty 0 15 
+login local
+line con 0
+login local
+ 
+transport input all 
+exit
+
+! Interface hacia TEGUCIGALPA (Enlace Principal)
+interface Serial0/2/0
+ description ENLACE-PRINCIPAL-SPS-D
+ Ip address 192.168.202.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1001::1/64 -----------------
+ no shutdown
+
+! Interface hacia LA CEIBA
+interface Serial0/1/1
+ description ENLACE-DC-LA-CEIBA
+ ip address 192.168.201.9 255.255.255.252
+ ipv6 address 2001:db8:a000:1003::1/64 -----------------
+ no shutdown
+
+! Interface hacia CHOLUTECA
+interface Serial0/2/0
+ description ENLACE-DC-CHOLUTECA
+ ip address 10.1.4.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1004::1/64 -----------------
+ clock rate 2000000
+ no shutdown
+
+! Interface hacia COMAYAGUA
+interface Serial0/2/1
+ description ENLACE-DC-COMAYAGUA
+ ip address 10.1.5.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1005::1/64 -----------------
+ clock rate 2000000
+ no shutdown
+
+! Interface hacia SANTA ROSA DE COPAN
+interface Serial0/3/0
+ description ENLACE-DC-COPAN
+ ip address 10.1.6.1 255.255.255.252
+ ipv6 address 2001:db8:a000:1006::1/64 -----------------
+ clock rate 2000000
+ no shutdown
+
