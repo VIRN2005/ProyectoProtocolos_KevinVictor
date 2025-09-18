@@ -1,45 +1,112 @@
 !================================================
 ! ROUTER SANTA ROSA DE COPÁN (R-COPAN)
 !================================================
-
 En
 Conf t
 hostname R-COPAN
-Ipv6 unicast-routing
+ipv6 unicast-routing
 banner motd # GRUPO ARRIETA SANTA ROSA DE COPAN - SOLO ACCESO AUTORIZADO #
 
-Ip domain-name arrieta.hn
+ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
 crypto key generate rsa general-keys modulus 1024
 
-line vty 0 15 
-login local 
-transport input all 
+line vty 0 15
+login local
+transport input all
 line con 0
 login local
 exit
 
-
 interface Serial0/0/0
- description ENLACE-COPAN-TGU
- ip address 192.168.203.2 255.255.255.252 
- ipv6 address 2001:db8:203:1::2/64
- no shutdown
- exit
+description ENLACE-COPAN-TGU
+ip address 192.168.203.2 255.255.255.252
+ipv6 address 2001:db8:203:1::2/64
+no shutdown
+exit
 
 interface Serial0/0/1
-description WAN-COMAYAGUA-DCRESPALDO
- ip address 192.168.203.6 255.255.255.252 
- ipv6 address 2001:db8:203:2::2/64
- no shutdown
- exit
+description WAN-COPAN-DCRESPALDO
+ip address 192.168.203.6 255.255.255.252
+ipv6 address 2001:db8:203:2::2/64
+no shutdown
+exit
 
 interface GigabitEthernet0/0
- description LAN-COPAN
- ip address 192.168.4.1 255.255.255.0
- ipv6 address 2001:db8:3000:4::1/64
- no shutdown
- exit
+description ENLACE-SWITCH-LOCAL
+no shutdown
+exit
+
+interface GigabitEthernet0/0.100
+description VLAN100-FINANZAS
+encapsulation dot1q 100
+ip address 192.168.4.1 255.255.255.192
+ipv6 address 2001:db8:3100:4::1/64
+no shutdown
+exit
+
+interface GigabitEthernet0/0.200
+description VLAN200-SERVICIOALCLIENTE
+encapsulation dot1q 200
+ip address 192.168.4.65 255.255.255.192
+ipv6 address 2001:db8:3200:4::1/64
+no shutdown
+exit
+
+interface GigabitEthernet0/0.300
+description VLAN300-SISTEMAS
+encapsulation dot1q 300
+ip address 192.168.4.129 255.255.255.192
+ipv6 address 2001:db8:3300:4::1/64
+no shutdown
+exit
+
+interface GigabitEthernet0/0.400
+description VLAN400-ADMINISTRACION
+encapsulation dot1q 400
+ip address 192.168.4.193 255.255.255.192
+ipv6 address 2001:db8:3400:4::1/64
+no shutdown
+exit
+
+! Configuración EIGRP IPv4
+router eigrp 100
+network 192.168.203.0 0.0.0.3
+network 192.168.203.4 0.0.0.3
+network 192.168.4.0 0.0.0.255
+no auto-summary
+exit
+
+! Configuración EIGRPv6 para IPv6
+ipv6 router eigrp 100
+eigrp router-id 5.5.5.5
+no shutdown
+exit
+
+! Aplicar EIGRP a interfaces
+interface Serial0/0/0
+ipv6 eigrp 100
+exit
+
+interface Serial0/0/1
+ipv6 eigrp 100
+exit
+
+interface GigabitEthernet0/0.100
+ipv6 eigrp 100
+exit
+
+interface GigabitEthernet0/0.200
+ipv6 eigrp 100
+exit
+
+interface GigabitEthernet0/0.300
+ipv6 eigrp 100
+exit
+
+interface GigabitEthernet0/0.400
+ipv6 eigrp 100
+exit
 
 end
 copy running-config startup-config
