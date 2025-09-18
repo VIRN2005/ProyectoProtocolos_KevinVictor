@@ -24,11 +24,11 @@ login local
 exit
 
 
-! Interface hacia SPS
+! Interface hacia TGU
 interface Serial0/2/0
- description ENLACE-DC-SPS
- Ip address 192.168.202.5 255.255.255.252
- ipv6 address 2001:db8:202:2::1/64 
+ description ENLACE-DC-TGU
+ Ip address 192.168.202.2 255.255.255.252
+ ipv6 address 2001:db8:202:1::2/64 
  no shutdown
 
 ! Interface hacia LA CEIBA
@@ -49,7 +49,7 @@ interface Serial0/1/0
 ! Interface hacia SANTA ROSA DE COPAN
 interface Serial0/0/1
  description ENLACE-DC-COPAN
- ip address 192.168.203.5255.255.255.252
+ ip address 192.168.203.5 255.255.255.252
  ipv6 address 2001:db8:203:2::1/64 
  clock rate 2000000
  no shutdown
