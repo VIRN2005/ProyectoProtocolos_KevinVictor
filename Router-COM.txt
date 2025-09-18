@@ -33,6 +33,11 @@ description WAN-COMAYAGUA-DCRESPALDO
  no shutdown
  exit
 
+interface GigabitEthernet0/0
+ description ENLACE-SWITCH-LOCAL
+ no shutdown
+ exit
+
 interface GigabitEthernet0/0.100
  description VLAN100-FINANZAS
  encapsulation dot1q 100
@@ -60,10 +65,48 @@ interface GigabitEthernet0/0.300
 
 interface GigabitEthernet0/0.400
  description VLAN400-ADMINISTRACION
+ encapsulation dot1q 400
  ip address 192.168.1.193 255.255.255.192
  ipv6 address 2001:db8:3400:1::1/64
  no shutdown 
  exit
+
+! ENRUTAMIENTO ESTÁTICO IPv4
+! Ruta por defecto principal hacia TGU
+ip route 0.0.0.0 0.0.0.0 192.168.200.1 20
+
+! Ruta por defecto de respaldo hacia SPS
+ip route 0.0.0.0 0.0.0.0 192.168.200.5 10
+
+! Rutas específicas hacia otras sucursales vía TGU
+ip route 192.168.2.0 255.255.255.0 192.168.200.1
+ip route 192.168.3.0 255.255.255.0 192.168.200.1
+ip route 192.168.4.0 255.255.255.0 192.168.200.1
+ip route 192.168.5.0 255.255.255.0 192.168.200.1
+
+! Rutas específicas hacia otras sucursales vía SPS DATACENTER
+ip route 192.168.2.0 255.255.255.0 192.168.200.5
+ip route 192.168.3.0 255.255.255.0 192.168.200.5
+ip route 192.168.4.0 255.255.255.0 192.168.200.5
+ip route 192.168.5.0 255.255.255.0 192.168.200.5
+
+
+! Rutas hacia datacenters
+ip route 192.168.100.0 255.255.255.0 192.168.200.1
+ip route 192.168.150.0 255.255.255.0 192.168.200.5
+
+! ENRUTAMIENTO ESTÁTICO IPv6
+! Ruta por defecto principal hacia TGU
+ipv6 route ::/0 2001:db8:200:1::1 20
+
+! Ruta por defecto de respaldo hacia SPS
+ipv6 route ::/0 2001:db8:200:2::1 10
+
+! Rutas específicas hacia otras sucursales
+ipv6 route 2001:db8:3000:2::/64 2001:db8:200:1::1
+ipv6 route 2001:db8:3000:3::/64 2001:db8:200:1::1
+ipv6 route 2001:db8:3000:4::/64 2001:db8:200:1::1
+ipv6 route 2001:db8:3000:5::/64 2001:db8:200:1::1
 
 end
 copy running-config startup-config
