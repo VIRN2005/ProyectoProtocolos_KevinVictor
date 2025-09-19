@@ -15,51 +15,150 @@ banner motd # GRUPO ARRIETA TEGUCIGALPA - SOLO ACCESO AUTORIZADO #
 
 Ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
-crypto key generate rsa general-keys modulus 1024
 
-line vty 0 15 
-login local 
-transport input all 
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+service ssh
+
+line vty 0 15
+ login local
+ transport input all
 line con 0
-login local
+ login local
 exit
 
-
-! Interface hacia SAN PEDRO SULA (Enlace Principal)
-interface Serial0/2/0
- description ENLACE-PRINCIPAL-TGU-SPS
- Ip address 192.168.202.1 255.255.255.252
- ipv6 address 2001:db8:202:1::1/64
+! CONFIGURACIÓN NAT PARA ACCESO A INTERNET
+interface Serial0/3/0
+ description ENLACE-INTERNET-TGU
+ ip address 10.0.1.1 255.255.255.252
+ ip nat outside
  no shutdown
+ exit
 
-! Interface hacia LA CEIBA
+ip nat pool ARRIETA_TGU_POOL 10.0.1.100 10.0.1.200 netmask 255.255.255.0
+ip nat inside source list 1 pool ARRIETA_TGU_POOL overload
+access-list 1 permit 192.168.0.0 0.0.255.255
+access-list 1 permit 10.0.0.0 0.255.255.255
+
+! Ruta por defecto hacia Internet
+ip route 0.0.0.0 0.0.0.0 10.0.1.2
+
+! Interface hacia SAN PEDRO SULA (Enlace Principal OSPF)
+interface Serial0/2/0
+ description ENLACE-PRINCIPAL-TGU-SPS-OSPF
+ ip address 192.168.202.1 255.255.255.252
+ ipv6 address 2001:db8:202:1::1/64
+ ip nat inside
+ no shutdown
+ exit
+
+! Interface hacia LA CEIBA (EIGRP)
 interface Serial0/1/1
- description ENLACE-TGU-LA-CEIBA
+ description ENLACE-TGU-LA-CEIBA-EIGRP
  ip address 192.168.204.1 255.255.255.252
  ipv6 address 2001:db8:204:1::1/64
+ ip nat inside
+ clock rate 2000000
  no shutdown
+ exit
 
-! Interface hacia CHOLUTECA
+! Interface hacia CHOLUTECA (EIGRP)
 interface Serial0/1/0
- description ENLACE-TGU-CHOLUTECA
+ description ENLACE-TGU-CHOLUTECA-EIGRP
  ip address 192.168.201.1 255.255.255.252
  ipv6 address 2001:db8:201:1::1/64
+ ip nat inside
  clock rate 2000000
  no shutdown
+ exit
 
-! Interface hacia SANTA ROSA DE COPAN
+! Interface hacia SANTA ROSA DE COPAN (EIGRP)
 interface Serial0/0/1
- description ENLACE-TGU-COPAN
+ description ENLACE-TGU-COPAN-EIGRP
  ip address 192.168.203.1 255.255.255.252
- ipv6 address 2001:db8:203:1::1/64 
+ ipv6 address 2001:db8:203:1::1/64
+ ip nat inside
  clock rate 2000000
  no shutdown
+ exit
 
-! Interface hacia COMAYAGUA
+! Interface hacia COMAYAGUA (STATIC)
 interface Serial0/0/0
- description ENLACE-TGU-COMAYAGUA
+ description ENLACE-TGU-COMAYAGUA-STATIC
  ip address 192.168.200.1 255.255.255.252
  ipv6 address 2001:db8:200:1::1/64
+ ip nat inside
  clock rate 2000000
  no shutdown
+ exit
 
+! ===============================
+! CONFIGURACIÓN OSPF IPv4
+! ===============================
+router ospf 1
+ router-id 1.1.1.1
+ network 192.168.100.0 0.0.0.255 area 0
+ network 192.168.202.0 0.0.0.3 area 0
+ redistribute eigrp 100 subnets metric 20
+ redistribute static subnets metric 10
+ exit
+
+! ===============================
+! CONFIGURACIÓN OSPFv3 PARA IPv6
+! ===============================
+ipv6 router ospf 1
+ router-id 1.1.1.1
+ redistribute eigrp 100 metric 20
+ redistribute static metric 10
+ exit
+
+! ===============================
+! CONFIGURACIÓN EIGRP IPv4
+! ===============================
+router eigrp 100
+ network 192.168.100.0 0.0.0.255
+ network 192.168.201.0 0.0.0.3
+ network 192.168.203.0 0.0.0.3
+ network 192.168.204.0 0.0.0.3
+ redistribute ospf 1 metric 1544 2000 255 1 1500
+ redistribute static metric 1544 2000 255 1 1500
+ no auto-summary
+ exit
+
+! ===============================
+! CONFIGURACIÓN EIGRPv6 PARA IPv6
+! ===============================
+ipv6 router eigrp 100
+ eigrp router-id 1.1.1.1
+ redistribute ospf 1 metric 1544 2000 255 1 1500
+ redistribute static metric 1544 2000 255 1 1500
+ no shutdown
+ exit
+
+! ===============================
+! APLICAR PROTOCOLOS A INTERFACES
+! ===============================
+
+! OSPF en interfaces hacia SPS y datacenter
+interface Serial0/2/0
+ ipv6 ospf 1 area 0
+ exit
+
+! EIGRP en interfaces hacia sucursales
+interface Serial0/0/1
+ ipv6 eigrp 100
+ exit
+
+interface Serial0/1/1
+ ipv6 eigrp 100
+ exit
+
+interface Serial0/1/0
+ ipv6 eigrp 100
+ exit
+
+! RUTAS ESTÁTICAS
+ip route 192.168.1.0 255.255.255.0 192.168.200.2 10
+
+end
+copy running-config startup-config
