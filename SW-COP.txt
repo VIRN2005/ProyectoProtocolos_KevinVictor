@@ -3,6 +3,7 @@
 !================================================
 en
 conf t
+ipv6 unicast-routing
 hostname SW-COP
 banner motd # GRUPO ARRIETA COPAN SWITCH - SOLO ACCESO AUTORIZADO #
 ip domain-name arrieta.hn
@@ -70,15 +71,8 @@ interface FastEthernet0/4
  no shutdown
 exit
 
-! SVI para administración
-interface vlan 300
- ip address 192.168.4.193 255.255.255.192
- ipv6 address 2001:db8:3400:4::1/64
- no shutdown
-exit
-
 ! Gateway por defecto
-ip default-gateway 0.0.0.0
+ip default-gateway 192.168.4.193
 
 end
 copy running-config startup-config
