@@ -92,10 +92,10 @@ interface GigabitEthernet0/0.400
 
 ! ENRUTAMIENTO ESTÁTICO IPv4
 ! Ruta por defecto principal hacia TGU
-ip route 0.0.0.0 0.0.0.0 192.168.200.1 20
+ip route 0.0.0.0 0.0.0.0 192.168.200.1 10
 
 ! Ruta por defecto de respaldo hacia SPS
-ip route 0.0.0.0 0.0.0.0 192.168.200.5 10
+ip route 0.0.0.0 0.0.0.0 192.168.200.5 20
 
 ! Rutas específicas hacia otras sucursales vía TGU
 ip route 192.168.2.0 255.255.255.0 192.168.200.1
