@@ -3,61 +3,174 @@
 !================================================
 
 !================================================
-! ROUTER CORE TEGUCIGALPA (R-SPS-RESPALDO)
+! ROUTER DATACENTER RESPALDO SPS (R-SPS-RESPALDO) - CONFIGURACIÓN COMPLETA
 !================================================
 
 En
 Conf t
 hostname R-SPS-RESPALDO
-Ipv6 unicast-routing
+ipv6 unicast-routing
 banner motd # GRUPO ARRIETA SPS-RESPALDO - SOLO ACCESO AUTORIZADO #
 
-Ip domain-name arrieta.hn
+ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
-crypto key generate rsa general-keys modulus 1024
+username tech privilege 15 secret Tech2025
 
-line vty 0 15 
-login local 
-transport input all 
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+service ssh
+
+line vty 0 15
+ login local
+ transport input all
 line con 0
-login local
+ login local
 exit
 
+! ===============================
+! CONFIGURACIÓN NAT PARA ACCESO A INTERNET
+! ===============================
+interface Serial0/3/0
+ description ENLACE-INTERNET-SPS-RESPALDO
+ ip address 10.0.2.1 255.255.255.252
+ ip nat outside
+ no shutdown
+ exit
 
-! Interface hacia TGU
+ip nat pool SPS_RESPALDO_POOL 10.0.2.100 10.0.2.200 netmask 255.255.255.0
+ip nat inside source list 1 pool SPS_RESPALDO_POOL overload
+access-list 1 permit 192.168.0.0 0.0.255.255
+access-list 1 permit 10.0.0.0 0.255.255.255
+
+! Ruta por defecto hacia Internet
+ip route 0.0.0.0 0.0.0.0 10.0.2.2
+
+! ===============================
+! INTERFACES WAN HACIA SITIOS
+! ===============================
+
+! Interface hacia TGU (Enlace Principal OSPF)
 interface Serial0/2/0
- description ENLACE-DC-TGU
- Ip address 192.168.202.2 255.255.255.252
- ipv6 address 2001:db8:202:1::2/64 
+ description ENLACE-DC-TGU-OSPF
+ ip address 192.168.202.2 255.255.255.252
+ ipv6 address 2001:db8:202:1::2/64
+ ip nat inside
  no shutdown
+ exit
 
-! Interface hacia LA CEIBA
+! Interface hacia LA CEIBA (EIGRP - Respaldo)
 interface Serial0/1/1
- description ENLACE-DC-LA-CEIBA
+ description ENLACE-DC-LA-CEIBA-EIGRP-RESPALDO
  ip address 192.168.204.5 255.255.255.252
- ipv6 address 2001:db8:204:2::1/64 
+ ipv6 address 2001:db8:204:2::1/64
+ ip nat inside
+ clock rate 2000000
  no shutdown
+ exit
 
-! Interface hacia CHOLUTECA
+! Interface hacia CHOLUTECA (EIGRP - Respaldo)
 interface Serial0/1/0
- description ENLACE-DC-CHOLUTECA
+ description ENLACE-DC-CHOLUTECA-EIGRP-RESPALDO
  ip address 192.168.201.5 255.255.255.252
- ipv6 address 2001:db8:201:2::1/64 
+ ipv6 address 2001:db8:201:2::1/64
+ ip nat inside
  clock rate 2000000
  no shutdown
+ exit
 
-! Interface hacia SANTA ROSA DE COPAN
+! Interface hacia SANTA ROSA DE COPAN (EIGRP - Respaldo)
 interface Serial0/0/1
- description ENLACE-DC-COPAN
+ description ENLACE-DC-COPAN-EIGRP-RESPALDO
  ip address 192.168.203.5 255.255.255.252
- ipv6 address 2001:db8:203:2::1/64 
+ ipv6 address 2001:db8:203:2::1/64
+ ip nat inside
  clock rate 2000000
  no shutdown
+ exit
 
-! Interface hacia COMAYAGUA
+! Interface hacia COMAYAGUA (STATIC - Respaldo)
 interface Serial0/0/0
- description ENLACE-DC-COMAYAGUA
+ description ENLACE-DC-COMAYAGUA-STATIC-RESPALDO
  ip address 192.168.200.5 255.255.255.252
- ipv6 address 2001:db8:200:2::1/64 
+ ipv6 address 2001:db8:200:2::1/64
+ ip nat inside
  clock rate 2000000
  no shutdown
+ exit
+
+! ===============================
+! CONFIGURACIÓN OSPF IPv4 CON REDISTRIBUCIÓN
+! ===============================
+router ospf 1
+ router-id 2.2.2.2
+ network 192.168.150.0 0.0.0.255 area 0
+ network 192.168.202.0 0.0.0.3 area 0
+ redistribute eigrp 100 subnets metric 20
+ redistribute static subnets metric 10
+ default-information originate
+ exit
+
+! ===============================
+! CONFIGURACIÓN OSPFv3 PARA IPv6 CON REDISTRIBUCIÓN
+! ===============================
+ipv6 router ospf 1
+ router-id 2.2.2.2
+ redistribute eigrp 100 metric 20
+ redistribute static metric 10
+ default-information originate
+ exit
+
+! ===============================
+! CONFIGURACIÓN EIGRP IPv4 CON REDISTRIBUCIÓN (RUTAS DE RESPALDO)
+! ===============================
+router eigrp 100
+ network 192.168.201.4 0.0.0.3
+ network 192.168.203.4 0.0.0.3
+ network 192.168.204.4 0.0.0.3
+ redistribute ospf 1 metric 1544 20000 255 1 1500
+ redistribute static metric 1544 20000 255 1 1500
+ no auto-summary
+ exit
+
+! ===============================
+! CONFIGURACIÓN EIGRPv6 PARA IPv6 CON REDISTRIBUCIÓN
+! ===============================
+ipv6 router eigrp 100
+ eigrp router-id 2.2.2.2
+ redistribute ospf 1 metric 1544 20000 255 1 1500
+ redistribute static metric 1544 20000 255 1 1500
+ no shutdown
+ exit
+
+! ===============================
+! APLICAR PROTOCOLOS A INTERFACES
+! ===============================
+
+! OSPF en interfaces hacia TGU y datacenter local
+interface Serial0/2/0
+ ipv6 ospf 1 area 0
+ exit
+
+
+! EIGRP en interfaces de respaldo hacia sucursales
+interface Serial0/1/1
+ ipv6 eigrp 100
+ exit
+
+interface Serial0/1/0
+ ipv6 eigrp 100
+ exit
+
+interface Serial0/0/1
+ ipv6 eigrp 100
+ exit
+
+! ===============================
+! RUTAS ESTÁTICAS DE RESPALDO HACIA SUCURSALES
+! ===============================
+Rutas hacia sucursales con métrica alta (respaldo)
+ip route 192.168.1.0 255.255.255.0 192.168.200.6 100
+ipv6 route 2001:db8:3000:1::/64 2001:db8:200:2::2 100
+
+end
+copy running-config startup-config
