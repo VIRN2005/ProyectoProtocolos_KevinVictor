@@ -1,10 +1,10 @@
 !================================================
-! SWITCH COPÁN (SW-COP)
+! SWITCH COMAYAGUA (SW-COM)
 !================================================
 en
 conf t
-hostname SW-COP
-banner motd # GRUPO ARRIETA COPAN SWITCH - SOLO ACCESO AUTORIZADO #
+hostname SW-COM
+banner motd # GRUPO ARRIETA COMAYAGUA SWITCH - SOLO ACCESO AUTORIZADO #
 ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
 
@@ -32,7 +32,7 @@ exit
 
 ! Configuración de trunk al router
 interface GigabitEthernet0/1
- description ENLACE-ROUTER-COPAN
+ description ENLACE-ROUTER-COMAYAGUA
  switchport mode trunk
  switchport trunk allowed vlan 100,200,300,400
  switchport trunk native vlan 999
@@ -93,13 +93,13 @@ exit
 
 ! SVI para administración
 interface vlan 300
- ip address 192.168.4.130 255.255.255.192
- ipv6 address 2001:db8:3000:4::130/64
+ ip address 192.168.1.130 255.255.255.192
+ ipv6 address 2001:db8:3000:1::130/64
  no shutdown
 exit
 
 ! Gateway por defecto
-ip default-gateway 192.168.4.129
+ip default-gateway 192.168.1.129
 
 end
 copy running-config startup-config

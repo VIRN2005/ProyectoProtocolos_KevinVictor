@@ -58,7 +58,7 @@ interface GigabitEthernet0/0
  exit
 
 interface GigabitEthernet0/0.100
- description VLAN100-FINANZAS
+ description VLAN100-LOGISTICA
  encapsulation dot1q 100
  ip address 192.168.1.1 255.255.255.192
  ipv6 address 2001:db8:3100:1::1/64
@@ -66,7 +66,7 @@ interface GigabitEthernet0/0.100
  exit
 
 interface GigabitEthernet0/0.200
- description VLAN200-SERVICIOALCLIENTE
+ description VLAN200-SOPORTE_TECNICO
  encapsulation dot1q 200
  ip address 192.168.1.65 255.255.255.192
  ipv6 address 2001:db8:3200:1::1/64
@@ -75,7 +75,7 @@ interface GigabitEthernet0/0.200
 
 
 interface GigabitEthernet0/0.300
- description VLAN300-SISTEMAS
+ description VLAN300-DESARROLLO_DE_SOFTWARE
  encapsulation dot1q 300
  ip address 192.168.1.129 255.255.255.192
  ipv6 address 2001:db8:3300:1::1/64
