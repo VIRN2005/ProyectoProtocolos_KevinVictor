@@ -145,6 +145,7 @@ router eigrp 100
  network 192.168.201.0 0.0.0.3
  network 192.168.203.0 0.0.0.3
  network 192.168.204.0 0.0.0.3
+ network 192.168.100.0 0.0.0.255
  redistribute ospf 1 metric 1544 2000 255 1 1500
  redistribute static metric 1544 2000 255 1 1500
  no auto-summary
@@ -194,7 +195,10 @@ interface Serial0/1/0
 ! RUTAS ESTÁTICAS HACIA COMAYAGUA
 ! ===============================
 ip route 192.168.1.0 255.255.255.0 192.168.200.2 10
-ipv6 route 2001:db8:3000:1::/64 2001:db8:200:1::2 10
+ipv6 route 2001:DB8:3100:1::/64 2001:DB8:200:1::2 10
+ipv6 route 2001:DB8:3200:1::/64 2001:DB8:200:1::2 10
+ipv6 route 2001:DB8:3300:1::/64 2001:DB8:200:1::2 10
+ipv6 route 2001:DB8:3400:1::/64 2001:DB8:200:1::2 10
 
 ! Ruta hacia datacenter SPS
 ip route 192.168.150.0 255.255.255.0 192.168.202.2
