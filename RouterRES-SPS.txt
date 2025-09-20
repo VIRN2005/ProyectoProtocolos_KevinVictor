@@ -14,7 +14,6 @@ banner motd # GRUPO ARRIETA SPS-RESPALDO - SOLO ACCESO AUTORIZADO #
 
 ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
-username tech privilege 15 secret Tech2025
 
 crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
@@ -30,8 +29,8 @@ exit
 ! ===============================
 ! CONFIGURACIÓN NAT PARA ACCESO A INTERNET
 ! ===============================
-interface Serial0/3/0
- description ENLACE-INTERNET-SPS-RESPALDO
+interface GigabitEthernet0/2
+ description ENLACE-INTERNET-SPS-ISP
  ip address 10.0.2.1 255.255.255.252
  ip nat outside
  no shutdown
@@ -44,6 +43,25 @@ access-list 1 permit 10.0.0.0 0.255.255.255
 
 ! Ruta por defecto hacia Internet
 ip route 0.0.0.0 0.0.0.0 10.0.2.2
+
+! ===============================
+! INTERFACE DATACENTER SPS LOCAL
+! ===============================
+interface GigabitEthernet0/0
+ description ENLACE-DATACENTER-SPS-DISTRIBUCION-1
+ ip address 192.168.150.1 255.255.255.0
+ ipv6 address 2001:db8:4000:150::1/64
+ ip nat inside
+ no shutdown
+ exit
+
+interface GigabitEthernet0/1
+ description ENLACE-DATACENTER-SPS-DISTRIBUCION-2
+ ip address 192.168.151.1 255.255.255.0
+ ipv6 address 2001:db8:4000:151::1/64
+ ip nat inside
+ no shutdown
+ exit
 
 ! ===============================
 ! INTERFACES WAN HACIA SITIOS
@@ -104,10 +122,10 @@ interface Serial0/0/0
 router ospf 1
  router-id 2.2.2.2
  network 192.168.150.0 0.0.0.255 area 0
+ network 192.168.151.0 0.0.0.255 area 0
  network 192.168.202.0 0.0.0.3 area 0
  redistribute eigrp 100 subnets metric 20
  redistribute static subnets metric 10
- default-information originate
  exit
 
 ! ===============================
@@ -117,7 +135,6 @@ ipv6 router ospf 1
  router-id 2.2.2.2
  redistribute eigrp 100 metric 20
  redistribute static metric 10
- default-information originate
  exit
 
 ! ===============================
@@ -151,6 +168,13 @@ interface Serial0/2/0
  ipv6 ospf 1 area 0
  exit
 
+interface GigabitEthernet0/0
+ ipv6 ospf 1 area 0
+ exit
+
+interface GigabitEthernet0/1
+ ipv6 ospf 1 area 0
+ exit
 
 ! EIGRP en interfaces de respaldo hacia sucursales
 interface Serial0/1/1
@@ -168,9 +192,15 @@ interface Serial0/0/1
 ! ===============================
 ! RUTAS ESTÁTICAS DE RESPALDO HACIA SUCURSALES
 ! ===============================
-Rutas hacia sucursales con métrica alta (respaldo)
+! Rutas hacia sucursales con métrica alta (respaldo)
 ip route 192.168.1.0 255.255.255.0 192.168.200.6 100
 ipv6 route 2001:db8:3000:1::/64 2001:db8:200:2::2 100
+
+! Ruta hacia datacenter TGU
+ip route 192.168.100.0 255.255.255.0 192.168.202.1
+ip route 192.168.111.0 255.255.255.0 192.168.202.1
+ipv6 route 2001:db8:4000:100::/64 2001:db8:202:1::1
+ipv6 route 2001:db8:4000:111::/64 2001:db8:202:1::1
 
 end
 copy running-config startup-config
