@@ -11,7 +11,7 @@ username admin privilege 15 secret Arrieta2025
 ! Acceso remoto y consola
 line vty 0 15
  login local
- transport input all
+ transport input ssh
 line con 0
  login local
 exit
@@ -35,7 +35,6 @@ interface GigabitEthernet0/1
  description ENLACE-ROUTER-CHOLUTECA
  switchport mode trunk
  switchport trunk allowed vlan 100,200,300,400
- switchport trunk native vlan 999
  no shutdown
 exit
 
@@ -71,15 +70,8 @@ interface FastEthernet0/4
  no shutdown
 exit
 
-! SVI para administración
-interface vlan 400
- ip address 192.168.2.193 255.255.255.192
- ipv6 address 2001:db8:3400:2::1/64
- no shutdown
-exit
-
 ! Gateway por defecto
-ip default-gateway 0.0.0.0
+ip default-gateway 192.168.2.193
 
 end
 copy running-config startup-config

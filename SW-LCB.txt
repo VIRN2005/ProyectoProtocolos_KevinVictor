@@ -3,6 +3,7 @@
 !================================================
 en
 conf t
+ipv6 unicast-routing
 hostname SW-LCB
 banner motd # GRUPO ARRIETA LA CEIBA SWITCH - SOLO ACCESO AUTORIZADO #
 ip domain-name arrieta.hn
@@ -70,15 +71,9 @@ interface FastEthernet0/4
  no shutdown
 exit
 
-! SVI para administración
-interface vlan 400
- ip address 192.168.5.193 255.255.255.192
- ipv6 address 2001:db8:3400:5::1/64
- no shutdown
-exit
 
-! Gateway por defecto
-ip default-gateway 0.0.0.0
+! Gateway por defectos
+ip default-gateway 192.168.5.193
 
 end
 copy running-config startup-config

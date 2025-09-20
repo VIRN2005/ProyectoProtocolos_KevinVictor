@@ -3,6 +3,7 @@
 !================================================
 en
 conf t
+ipv6 unicast-routing
 hostname SW-COM
 banner motd # GRUPO ARRIETA COMAYAGUA SWITCH - SOLO ACCESO AUTORIZADO #
 ip domain-name arrieta.hn
