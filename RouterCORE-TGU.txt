@@ -127,6 +127,7 @@ router ospf 1
  network 192.168.202.0 0.0.0.3 area 0
  redistribute eigrp 100 subnets metric 20
  redistribute static subnets metric 10
+ default-information originate
  exit
 
 ! ===============================
@@ -136,6 +137,7 @@ ipv6 router ospf 1
  router-id 1.1.1.1
  redistribute eigrp 100 metric 20
  redistribute static metric 10
+ default-information originate
  exit
 
 ! ===============================
@@ -145,7 +147,6 @@ router eigrp 100
  network 192.168.201.0 0.0.0.3
  network 192.168.203.0 0.0.0.3
  network 192.168.204.0 0.0.0.3
- network 192.168.100.0 0.0.0.255
  redistribute ospf 1 metric 1544 2000 255 1 1500
  redistribute static metric 1544 2000 255 1 1500
  no auto-summary
