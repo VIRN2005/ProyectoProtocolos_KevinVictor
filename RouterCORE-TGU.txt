@@ -49,21 +49,117 @@ ip route 0.0.0.0 0.0.0.0 10.0.1.2
 ! INTERFACE DATACENTER TGU LOCAL
 ! ===============================
 interface GigabitEthernet0/0
- description ENLACE-DATACENTER-TGU-DISTRIBUCION-1
- ip address 192.168.100.1 255.255.255.0
- ipv6 address 2001:db8:4000:100::1/64
- ip nat inside
  no shutdown
- exit
+ no ip address
 
 interface GigabitEthernet0/1
- description ENLACE-DATACENTER-TGU-DISTRIBUCION-2
- ip address 192.168.111.1 255.255.255.0
- ipv6 address 2001:db8:4000:111::1/64
+ no shutdown
+ no ip address
+! Interfaz física hacia switches L2 (trunk)
+
+! VLAN 100 - LOGISTICA (Gi0/0 - Router Activo)
+interface GigabitEthernet0/0.100
+ encapsulation dot1Q 100
+ ip address 192.168.100.3 255.255.255.192
+ standby version 2
+ standby 1 ip 192.168.100.1
+ standby 1 priority 110
+ standby 1 preempt
+ standby 1 track GigabitEthernet0/1 10
+ ipv6 address 2001:db8:4100:100::1/64
  ip nat inside
  no shutdown
- exit
 
+! VLAN 200 - SOPORTE TECNICO (Gi0/0 - Router Activo)
+interface GigabitEthernet0/0.200
+ encapsulation dot1Q 200
+ ip address 192.168.100.67 255.255.255.192
+ standby version 2
+ standby 2 ip 192.168.100.65
+ standby 2 priority 110
+ standby 2 preempt
+ standby 2 track GigabitEthernet0/1 10
+ ipv6 address 2001:db8:4200:100::1/64
+ ip nat inside
+ no shutdown
+
+! VLAN 300 - DESARROLLO SOFTWARE (Gi0/0 - Router Standby)
+interface GigabitEthernet0/0.300
+ encapsulation dot1Q 300
+ ip address 192.168.100.131 255.255.255.192
+ standby version 2
+ standby 3 ip 192.168.100.129
+ standby 3 priority 90
+ standby 3 preempt
+ standby 3 track GigabitEthernet0/1 10
+ ipv6 address 2001:db8:4300:100::2/64
+ ip nat inside
+ no shutdown
+
+! VLAN 400 - ADMINISTRACION (Gi0/0 - Router Standby)
+interface GigabitEthernet0/0.400
+ encapsulation dot1Q 400
+ ip address 192.168.100.195 255.255.255.192
+ standby version 2
+ standby 4 ip 192.168.100.193
+ standby 4 priority 90
+ standby 4 preempt
+ standby 4 track GigabitEthernet0/1 10
+ ipv6 address 2001:db8:4400:100::2/64
+ ip nat inside
+ no shutdown
+
+! VLAN 100 - LOGISTICA (Gi0/1 - Router Standby)
+interface GigabitEthernet0/1.100
+ encapsulation dot1Q 100
+ ip address 192.168.101.4 255.255.255.192
+ standby version 2
+ standby 1 ip 192.168.100.1
+ standby 1 priority 100
+ standby 1 preempt
+ standby 1 track GigabitEthernet0/0 10
+ ipv6 address 2001:db8:4100:100::2/64
+ ip nat inside
+ no shutdown
+
+! VLAN 200 - SOPORTE TECNICO (Gi0/1 - Router Standby)
+interface GigabitEthernet0/1.200
+ encapsulation dot1Q 200
+ ip address 192.168.101.68 255.255.255.192
+ standby version 2
+ standby 2 ip 192.168.100.65
+ standby 2 priority 100
+ standby 2 preempt
+ standby 2 track GigabitEthernet0/0 10
+ ipv6 address 2001:db8:4200:100::2/64
+ ip nat inside
+ no shutdown
+
+! VLAN 300 - DESARROLLO SOFTWARE (Gi0/1 - Router Activo)
+interface GigabitEthernet0/1.300
+ encapsulation dot1Q 300
+ ip address 192.168.101.132 255.255.255.192
+ standby version 2
+ standby 3 ip 192.168.100.129
+ standby 3 priority 110
+ standby 3 preempt
+ standby 3 track GigabitEthernet0/0 10
+ ipv6 address 2001:db8:4300:100::1/64
+ ip nat inside
+ no shutdown
+
+! VLAN 400 - ADMINISTRACION (Gi0/1 - Router Activo)
+interface GigabitEthernet0/1.400
+ encapsulation dot1Q 400
+ ip address 192.168.101.196 255.255.255.192
+ standby version 2
+ standby 4 ip 192.168.100.193
+ standby 4 priority 110
+ standby 4 preempt
+ standby 4 track GigabitEthernet0/0 10
+ ipv6 address 2001:db8:4400:100::1/64
+ ip nat inside
+ no shutdown
 ! ===============================
 ! INTERFACES WAN HACIA SUCURSALES
 ! ===============================
@@ -205,4 +301,4 @@ ipv6 route 2001:DB8:3400:1::/64 2001:DB8:200:1::2 10
 ip route 192.168.150.0 255.255.255.0 192.168.202.2
 
 end
-copy running-config startup-config
+copy running-config startup-config

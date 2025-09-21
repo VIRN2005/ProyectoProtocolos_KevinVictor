@@ -1,0 +1,65 @@
+!================================================
+! SWITCH TEGUCIGALPA (DIST2 - L2)
+!================================================
+en
+conf t
+hostname DIST2
+banner motd # GRUPO ARRIETA TEGUCIGALPA DIST2 - SOLO ACCESO AUTORIZADO #
+ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+
+! Acceso remoto
+line vty 0 15
+ login local
+ transport input all
+line con 0
+ login local
+exit
+
+! VLANs
+vlan 100
+ name LOGISTICA
+vlan 200
+ name SOPORTE_TECNICO
+vlan 300
+ name DESARROLLO_DE_SOFTWARE
+vlan 400
+ name ADMINISTRACION
+
+interface fa0/1
+ description ENLACE-HACIA-ROUTER-CORE-Gi0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ spanning-tree portfast trunk
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+! ENLACES HACIA ACCESS SWITCHES
+interface fa0/3
+ description TRUNK_HACIA_ACCESS1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ spanning-tree portfast trunk
+ no shutdown
+exit
+
+interface fa0/5
+ description TRUNK_HACIA_ACCESS2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ spanning-tree portfast trunk
+ no shutdown
+exit
+
+spanning-tree vlan 100 root secondary
+spanning-tree vlan 200 root secondary
+spanning-tree vlan 300 root primary
+spanning-tree vlan 400 root primary
+spanning-tree mode rapid-pvst
+
+end
+copy running-config startup-config
