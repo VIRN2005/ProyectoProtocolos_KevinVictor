@@ -1,0 +1,63 @@
+!================================================
+! SWITCH ACCESS1 (LOGÍSTICA + SOPORTE)
+!================================================
+en
+conf t
+hostname ACCESS1
+banner motd # SWITCH ACCESS1 - SOLO ACCESO AUTORIZADO #
+ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+
+! Acceso remoto
+line vty 0 15
+ login local
+ transport input all
+line con 0
+ login local
+exit
+
+! VLANs locales
+vlan 100
+ name LOGISTICA
+vlan 200
+ name SOPORTE_TECNICO
+
+
+interface fa0/2
+ description PC_LOGISTICA_VLAN100
+ switchport mode access
+ switchport access vlan 100
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+interface fa0/3
+ description PC_SOPORTE_VLAN200
+ switchport mode access
+ switchport access vlan 200
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+! Doble uplink hacia ambos DIST (redundancia)
+interface fa0/1
+ description TRUNK_HACIA_DIST1
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200
+ no shutdown
+exit
+
+interface fa0/5
+ description TRUNK_HACIA_DIST2
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200
+ no shutdown
+exit
+
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+end
+copy running-config startup-config
