@@ -1,0 +1,119 @@
+!================================================
+! SWITCH ACCESS2 (DESARROLLO + ADMINISTRACIÓN) - CONFIGURACIÓN IPv4 + IPv6
+!================================================
+
+enable
+configure terminal
+hostname ACCESS2
+ipv6 unicast-routing
+banner motd # SWITCH ACCESS2 - SOLO ACCESO AUTORIZADO #
+ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+service ssh
+
+! Acceso remoto
+line vty 0 15
+ login local
+ transport input ssh
+line con 0
+ login local
+ logging synchronous
+ exec-timeout 0 0
+exit
+
+! ===============================
+! VLANs
+! ===============================
+vlan 100
+ name LOGISTICA
+vlan 200
+ name SOPORTE_TECNICO
+vlan 300
+ name DESARROLLO_DE_SOFTWARE
+vlan 400
+ name ADMINISTRACION
+
+! ===============================
+! PUERTOS DE USUARIOS CON PORT SECURITY
+! ===============================
+interface FastEthernet0/2
+ description PC_DESARROLLO_001
+ switchport mode access
+ switchport access vlan 300
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+interface FastEthernet0/3
+ description PC_DESARROLLO_002
+ switchport mode access
+ switchport access vlan 300
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+interface FastEthernet0/4
+ description PC_ADMIN_001
+ switchport mode access
+ switchport access vlan 400
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+interface FastEthernet0/6
+ description PC_ADMIN_002
+ switchport mode access
+ switchport access vlan 400
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+exit
+
+! ===============================
+! UPLINKS HACIA DIST SWITCHES (REDUNDANCIA)
+! ===============================
+interface FastEthernet0/1
+ description TRUNK_HACIA_DIST1
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ no shutdown
+exit
+
+interface FastEthernet0/5
+ description TRUNK_HACIA_DIST2
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ no shutdown
+exit
+
+! ===============================
+! SPANNING TREE CONFIGURATION
+! ===============================
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+
+end
+copy running-config startup-config
+

@@ -1,0 +1,153 @@
+!================================================
+! SWITCH DIST1 (Layer 3)
+!================================================
+
+enable
+configure terminal
+hostname DIST1
+ipv6 unicast-routing
+banner motd # GRUPO ARRIETA SPS DIST1 - SOLO ACCESO AUTORIZADO #
+ip domain-name arrieta.hn
+username admin privilege 15 secret Arrieta2025
+
+! Habilitar enrutamiento IP
+ip routing
+
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+service ssh
+
+! Acceso remoto
+line vty 0 15
+ login local
+ transport input ssh
+line con 0
+ login local
+ logging synchronous
+ exec-timeout 0 0
+exit
+
+! ===============================
+! VLANs
+! ===============================
+vlan 100
+ name LOGISTICA
+vlan 200
+ name SOPORTE_TECNICO
+vlan 300
+ name DESARROLLO_DE_SOFTWARE
+vlan 400
+ name ADMINISTRACION
+
+! ===============================
+! INTERFACES VLAN CON HSRP IPv4 + IPv6
+! ===============================
+interface vlan 100
+ description LOGISTICA-GATEWAY
+ ip address 192.168.150.2 255.255.255.192
+ ipv6 address 2001:db8:4100:150::2/64
+ standby version 2
+ standby 1 ip 192.168.150.1
+ standby 1 priority 110
+ standby 1 preempt
+ standby 1 track GigabitEthernet0/1 10
+ ipv6 enable
+ no shutdown
+
+interface vlan 200
+ description SOPORTE_TECNICO-GATEWAY
+ ip address 192.168.150.66 255.255.255.192
+ ipv6 address 2001:db8:4200:150::2/64
+ standby version 2
+ standby 2 ip 192.168.150.65
+ standby 2 priority 110
+ standby 2 preempt
+ standby 2 track GigabitEthernet0/1 10
+ ipv6 enable
+ no shutdown
+
+interface vlan 300
+ description DESARROLLO_SOFTWARE-GATEWAY
+ ip address 192.168.150.130 255.255.255.192
+ ipv6 address 2001:db8:4300:150::2/64
+ standby version 2
+ standby 3 ip 192.168.150.129
+ standby 3 priority 90
+ standby 3 preempt
+ standby 3 track GigabitEthernet0/1 10
+ ipv6 enable
+ no shutdown
+
+interface vlan 400
+ description ADMINISTRACION-GATEWAY
+ ip address 192.168.150.194 255.255.255.192
+ ipv6 address 2001:db8:4400:150::2/64
+ standby version 2
+ standby 4 ip 192.168.150.193
+ standby 4 priority 90
+ standby 4 preempt
+ standby 4 track GigabitEthernet0/1 10
+ ipv6 enable
+ no shutdown
+
+! ===============================
+! INTERFACE HACIA ROUTER CORE
+! ===============================
+interface GigabitEthernet0/1
+ description ENLACE-HACIA-ROUTER-CORE-Gi0/0
+ no switchport
+ ip address 192.168.199.2 255.255.255.252
+ ipv6 address 2001:db8:4000:199::2/64
+ ipv6 enable
+ no shutdown
+exit
+
+! ===============================
+! ENLACES TRUNK HACIA ACCESS SWITCHES
+! ===============================
+interface FastEthernet0/3
+ description TRUNK_HACIA_ACCESS1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ spanning-tree portfast trunk
+ no shutdown
+exit
+
+interface FastEthernet0/5
+ description TRUNK_HACIA_ACCESS2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ spanning-tree portfast trunk
+ no shutdown
+exit
+
+! ===============================
+! ENLACE HACIA DIST2 (INTERSWITCH LINK)
+! ===============================
+interface FastEthernet0/24
+ description ISL-HACIA-DIST2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100,200,300,400
+ no shutdown
+exit
+
+! ===============================
+! SPANNING TREE CONFIGURATION
+! ===============================
+spanning-tree vlan 100 root primary
+spanning-tree vlan 200 root primary
+spanning-tree vlan 300 root secondary
+spanning-tree vlan 400 root secondary
+spanning-tree mode rapid-pvst
+
+! ===============================
+! RUTAS ESTÁTICAS IPv4 + IPv6
+! ===============================
+ip route 0.0.0.0 0.0.0.0 192.168.199.1
+ipv6 route ::/0 2001:db8:4000:199::1
+
+end
+copy running-config startup-config
