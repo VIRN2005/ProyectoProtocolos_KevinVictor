@@ -1,19 +1,14 @@
 !================================================
-! CONFIGURACIONES BASADAS EN TOPOLOGÍA PACKET TRACER
-! GRUPO ARRIETA - RED EMPRESARIAL NACIONAL
+! ROUTER CORE TEGUCIGALPA (R-TEGUCIGALPA) - CONFIGURACIÓN ADAPTADA
 !================================================
 
-!================================================
-! ROUTER CORE TEGUCIGALPA (R-TEGUCIGALPA)
-!================================================
-
-En
-Conf t
+enable
+configure terminal
 hostname R-TEGUCIGALPA
-Ipv6 unicast-routing
+ipv6 unicast-routing
 banner motd # GRUPO ARRIETA TEGUCIGALPA - SOLO ACCESO AUTORIZADO #
 
-Ip domain-name arrieta.hn
+ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
 
 crypto key generate rsa general-keys modulus 1024
@@ -22,9 +17,11 @@ service ssh
 
 line vty 0 15
  login local
- transport input all
+ transport input ssh
 line con 0
  login local
+ logging synchronous
+ exec-timeout 0 0
 exit
 
 ! ===============================
@@ -33,49 +30,58 @@ exit
 interface GigabitEthernet0/2
  description ENLACE-INTERNET-TGU-ISP
  ip address 10.0.1.1 255.255.255.252
+ ipv6 address 2001:db8:internet:1::1/64
  ip nat outside
+ ipv6 enable
  no shutdown
- exit
+exit
 
-ip nat pool ARRIETA_TGU_POOL 10.0.1.100 10.0.1.200 netmask 255.255.255.0
 ip nat inside source list 1 interface GigabitEthernet0/2 overload
-access-list 1 permit 192.168.0.0 0.0.255.255
+access-list 1 permit 192.168.100.0 0.0.0.255
+access-list 1 permit 192.168.101.0 0.0.0.255
 access-list 1 permit 10.0.0.0 0.255.255.255
 
-! Ruta por defecto hacia Internet
+! Rutas por defecto
 ip route 0.0.0.0 0.0.0.0 10.0.1.2
+ipv6 route ::/0 2001:db8:internet:1::2
 
 ! ===============================
-! INTERFACE DATACENTER TGU LOCAL
+! INTERFACES HACIA SWITCHES DIST (LAYER 3 LINKS)
 ! ===============================
+! Interface hacia DIST1
 interface GigabitEthernet0/0
- description ENLACE-DATACENTER-TGU-DISTRIBUCION-1
- ip address 192.168.100.1 255.255.255.0
- ipv6 address 2001:db8:4000:100::1/64
+ description ENLACE-HACIA-DIST1-TGU-Gi0/1
+ no switchport
+ ip address 192.168.110.1 255.255.255.252
+ ipv6 address 2001:db8:4000:110::1/64
  ip nat inside
+ ipv6 enable
  no shutdown
- exit
+exit
 
+! Interface hacia DIST2
 interface GigabitEthernet0/1
- description ENLACE-DATACENTER-TGU-DISTRIBUCION-2
- ip address 192.168.111.1 255.255.255.0
- ipv6 address 2001:db8:4000:111::1/64
+ description ENLACE-HACIA-DIST2-TGU-Gi0/1
+ no switchport
+ ip address 192.168.110.5 255.255.255.252
+ ipv6 address 2001:db8:4000:110:1::1/64
  ip nat inside
+ ipv6 enable
  no shutdown
- exit
+exit
 
 ! ===============================
 ! INTERFACES WAN HACIA SUCURSALES
 ! ===============================
-
 ! Interface hacia SAN PEDRO SULA (Enlace Principal OSPF)
 interface Serial0/2/0
  description ENLACE-PRINCIPAL-TGU-SPS-OSPF
  ip address 192.168.202.1 255.255.255.252
  ipv6 address 2001:db8:202:1::1/64
  ip nat inside
+ ipv6 enable
  no shutdown
- exit
+exit
 
 ! Interface hacia LA CEIBA (EIGRP)
 interface Serial0/1/1
@@ -83,9 +89,10 @@ interface Serial0/1/1
  ip address 192.168.204.1 255.255.255.252
  ipv6 address 2001:db8:204:1::1/64
  ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
- exit
+exit
 
 ! Interface hacia CHOLUTECA (EIGRP)
 interface Serial0/1/0
@@ -93,9 +100,10 @@ interface Serial0/1/0
  ip address 192.168.201.1 255.255.255.252
  ipv6 address 2001:db8:201:1::1/64
  ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
- exit
+exit
 
 ! Interface hacia SANTA ROSA DE COPAN (EIGRP)
 interface Serial0/0/1
@@ -103,9 +111,10 @@ interface Serial0/0/1
  ip address 192.168.203.1 255.255.255.252
  ipv6 address 2001:db8:203:1::1/64
  ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
- exit
+exit
 
 ! Interface hacia COMAYAGUA (STATIC)
 interface Serial0/0/0
@@ -113,22 +122,38 @@ interface Serial0/0/0
  ip address 192.168.200.1 255.255.255.252
  ipv6 address 2001:db8:200:1::1/64
  ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
- exit
+exit
+
+! ===============================
+! RUTAS IPv4 HACIA LAS VLANs VIA DIST SWITCHES
+! ===============================
+ip route 192.168.100.0 255.255.255.192 192.168.110.2
+ip route 192.168.100.64 255.255.255.192 192.168.110.2
+ip route 192.168.100.128 255.255.255.192 192.168.110.6
+ip route 192.168.101.192 255.255.255.192 192.168.110.6
+
+! ===============================
+! RUTAS IPv6 HACIA LAS VLANs VIA DIST SWITCHES
+! ===============================
+ipv6 route 2001:db8:4100:100::/64 2001:db8:4000:110::2
+ipv6 route 2001:db8:4200:100::/64 2001:db8:4000:110::2
+ipv6 route 2001:db8:4300:100::/64 2001:db8:4000:110:1::2
+ipv6 route 2001:db8:4400:100::/64 2001:db8:4000:110:1::2
 
 ! ===============================
 ! CONFIGURACIÓN OSPF IPv4
 ! ===============================
 router ospf 1
  router-id 1.1.1.1
- network 192.168.100.0 0.0.0.255 area 0
- network 192.168.111.0 0.0.0.255 area 0
+ network 192.168.110.0 0.0.0.7 area 0
  network 192.168.202.0 0.0.0.3 area 0
  redistribute eigrp 100 subnets metric 20
  redistribute static subnets metric 10
  default-information originate
- exit
+exit
 
 ! ===============================
 ! CONFIGURACIÓN OSPFv3 PARA IPv6
@@ -138,7 +163,7 @@ ipv6 router ospf 1
  redistribute eigrp 100 metric 20
  redistribute static metric 10
  default-information originate
- exit
+exit
 
 ! ===============================
 ! CONFIGURACIÓN EIGRP IPv4
@@ -147,59 +172,58 @@ router eigrp 100
  network 192.168.201.0 0.0.0.3
  network 192.168.203.0 0.0.0.3
  network 192.168.204.0 0.0.0.3
- redistribute ospf 1 metric 1544 2000 255 1 1500
- redistribute static metric 1544 2000 255 1 1500
+ redistribute ospf 1 metric 1544 20000 255 1 1500
+ redistribute static metric 1544 20000 255 1 1500
  no auto-summary
- exit
+exit
 
 ! ===============================
 ! CONFIGURACIÓN EIGRPv6 PARA IPv6
 ! ===============================
 ipv6 router eigrp 100
  eigrp router-id 1.1.1.1
- redistribute ospf 1 metric 1544 2000 255 1 1500
- redistribute static metric 1544 2000 255 1 1500
+ redistribute ospf 1 metric 1544 20000 255 1 1500
+ redistribute static metric 1544 20000 255 1 1500
  no shutdown
- exit
+exit
 
 ! ===============================
 ! APLICAR PROTOCOLOS A INTERFACES
 ! ===============================
-
-! OSPF en interfaces hacia SPS y datacenter
+! OSPF en interfaces hacia SPS y switches dist
 interface Serial0/2/0
  ipv6 ospf 1 area 0
- exit
+exit
 
 interface GigabitEthernet0/0
  ipv6 ospf 1 area 0
- exit
+exit
 
 interface GigabitEthernet0/1
  ipv6 ospf 1 area 0
- exit
+exit
 
 ! EIGRP en interfaces hacia sucursales
 interface Serial0/0/1
  ipv6 eigrp 100
- exit
+exit
 
 interface Serial0/1/1
  ipv6 eigrp 100
- exit
+exit
 
 interface Serial0/1/0
  ipv6 eigrp 100
- exit
+exit
 
 ! ===============================
 ! RUTAS ESTÁTICAS HACIA COMAYAGUA
 ! ===============================
-ip route 192.168.1.0 255.255.255.0 192.168.200.2 10
-ipv6 route 2001:DB8:3100:1::/64 2001:DB8:200:1::2 10
-ipv6 route 2001:DB8:3200:1::/64 2001:DB8:200:1::2 10
-ipv6 route 2001:DB8:3300:1::/64 2001:DB8:200:1::2 10
-ipv6 route 2001:DB8:3400:1::/64 2001:DB8:200:1::2 10
+ip route 192.168.1.0 255.255.255.0 192.168.200.2 100
+ipv6 route 2001:DB8:3100:1::/64 2001:DB8:200:1::2 100
+ipv6 route 2001:DB8:3200:1::/64 2001:DB8:200:1::2 100
+ipv6 route 2001:DB8:3300:1::/64 2001:DB8:200:1::2 100
+ipv6 route 2001:DB8:3400:1::/64 2001:DB8:200:1::2 100
 
 ! Ruta hacia datacenter SPS
 ip route 192.168.150.0 255.255.255.0 192.168.202.2
