@@ -1,63 +1,211 @@
 !================================================
-! GRUPO ARRIETA - RED EMPRESARIAL NACIONAL
+! ROUTER CORE SPS (R-SPS-RESPALDO) - CONFIGURACIÓN IPv4 + IPv6 COMPLETA
 !================================================
 
-!================================================
-! ROUTER CORE TEGUCIGALPA (R-SPS-RESPALDO)
-!================================================
-
-En
-Conf t
+enable
+configure terminal
 hostname R-SPS-RESPALDO
-Ipv6 unicast-routing
+ipv6 unicast-routing
 banner motd # GRUPO ARRIETA SPS-RESPALDO - SOLO ACCESO AUTORIZADO #
 
-Ip domain-name arrieta.hn
+ip domain-name arrieta.hn
 username admin privilege 15 secret Arrieta2025
-crypto key generate rsa general-keys modulus 1024
 
-line vty 0 15 
-login local 
-transport input all 
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+service ssh
+
+line vty 0 15
+ login local
+ transport input ssh
 line con 0
-login local
+ login local
+ logging synchronous
+ exec-timeout 0 0
 exit
 
+! ===============================
+! CONFIGURACIÓN NAT PARA ACCESO A INTERNET
+! ===============================
+interface GigabitEthernet0/2
+ description ENLACE-INTERNET-SPS-ISP
+ ip address 10.0.2.1 255.255.255.252
+ ipv6 address 2001:db8:internet:2::1/64
+ ip nat outside
+ ipv6 enable
+ no shutdown
+exit
 
-! Interface hacia TGU
+ip nat inside source list 1 interface GigabitEthernet0/2 overload
+access-list 1 permit 192.168.150.0 0.0.0.255
+access-list 1 permit 10.0.0.0 0.255.255.255
+
+! Rutas por defecto
+ip route 0.0.0.0 0.0.0.0 10.0.2.2
+ipv6 route ::/0 2001:db8:internet:2::2
+
+! ===============================
+! INTERFACES HACIA SWITCHES DIST
+! ===============================
+! Interface hacia DIST1
+interface GigabitEthernet0/0
+ description ENLACE-HACIA-DIST1-Gi0/1
+ no switchport
+ ip address 192.168.199.1 255.255.255.252
+ ipv6 address 2001:db8:4000:199::1/64
+ ip nat inside
+ ipv6 enable
+ no shutdown
+exit
+
+! Interface hacia DIST2
+interface GigabitEthernet0/1
+ description ENLACE-HACIA-DIST2-Gi0/1
+ no switchport
+ ip address 192.168.199.5 255.255.255.252
+ ipv6 address 2001:db8:4000:199:1::1/64
+ ip nat inside
+ ipv6 enable
+ no shutdown
+exit
+
+! ===============================
+! INTERFACES WAN HACIA SITIOS (IPv4 + IPv6)
+! ===============================
 interface Serial0/2/0
- description ENLACE-DC-TGU
- Ip address 192.168.202.2 255.255.255.252
- ipv6 address 2001:db8:202:1::2/64 
+ description ENLACE-DC-TGU-OSPF
+ ip address 192.168.202.2 255.255.255.252
+ ipv6 address 2001:db8:202:1::2/64
+ ip nat inside
+ ipv6 enable
  no shutdown
+exit
 
-! Interface hacia LA CEIBA
 interface Serial0/1/1
- description ENLACE-DC-LA-CEIBA
+ description ENLACE-DC-LA-CEIBA-EIGRP-RESPALDO
  ip address 192.168.204.5 255.255.255.252
- ipv6 address 2001:db8:204:2::1/64 
+ ipv6 address 2001:db8:204:2::1/64
+ ip nat inside
+ ipv6 enable
+ clock rate 2000000
  no shutdown
+exit
 
-! Interface hacia CHOLUTECA
 interface Serial0/1/0
- description ENLACE-DC-CHOLUTECA
+ description ENLACE-DC-CHOLUTECA-EIGRP-RESPALDO
  ip address 192.168.201.5 255.255.255.252
- ipv6 address 2001:db8:201:2::1/64 
+ ipv6 address 2001:db8:201:2::1/64
+ ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
+exit
 
-! Interface hacia SANTA ROSA DE COPAN
 interface Serial0/0/1
- description ENLACE-DC-COPAN
+ description ENLACE-DC-COPAN-EIGRP-RESPALDO
  ip address 192.168.203.5 255.255.255.252
- ipv6 address 2001:db8:203:2::1/64 
+ ipv6 address 2001:db8:203:2::1/64
+ ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
+exit
 
-! Interface hacia COMAYAGUA
 interface Serial0/0/0
- description ENLACE-DC-COMAYAGUA
+ description ENLACE-DC-COMAYAGUA-STATIC-RESPALDO
  ip address 192.168.200.5 255.255.255.252
- ipv6 address 2001:db8:200:2::1/64 
+ ipv6 address 2001:db8:200:2::1/64
+ ip nat inside
+ ipv6 enable
  clock rate 2000000
  no shutdown
+exit
+
+! ===============================
+! RUTAS IPv4 HACIA LAS VLANs VIA DIST SWITCHES
+! ===============================
+ip route 192.168.150.0 255.255.255.192 192.168.199.2
+ip route 192.168.150.64 255.255.255.192 192.168.199.2
+ip route 192.168.150.128 255.255.255.192 192.168.199.6
+ip route 192.168.150.192 255.255.255.192 192.168.199.6
+
+! ===============================
+! RUTAS IPv6 HACIA LAS VLANs VIA DIST SWITCHES
+! ===============================
+ipv6 route 2001:db8:4100:150::/64 2001:db8:4000:199::2
+ipv6 route 2001:db8:4200:150::/64 2001:db8:4000:199::2
+ipv6 route 2001:db8:4300:150::/64 2001:db8:4000:199:1::2
+ipv6 route 2001:db8:4400:150::/64 2001:db8:4000:199:1::2
+
+! ===============================
+! PROTOCOLOS DE ENRUTAMIENTO IPv4
+! ===============================
+router ospf 1
+ router-id 2.2.2.2
+ network 192.168.199.0 0.0.0.7 area 0
+ network 192.168.202.0 0.0.0.3 area 0
+ redistribute eigrp 100 subnets metric 20
+ redistribute static subnets metric 10
+ default-information originate
+exit
+
+router eigrp 100
+ network 192.168.201.4 0.0.0.3
+ network 192.168.203.4 0.0.0.3
+ network 192.168.204.4 0.0.0.3
+ redistribute ospf 1 metric 1544 20000 255 1 1500
+ redistribute static metric 1544 20000 255 1 1500
+ no auto-summary
+exit
+
+! ===============================
+! PROTOCOLOS DE ENRUTAMIENTO IPv6
+! ===============================
+ipv6 router ospf 1
+ router-id 2.2.2.2
+ redistribute eigrp 100 metric 20
+ redistribute static metric 10
+ default-information originate
+exit
+
+ipv6 router eigrp 100
+ eigrp router-id 2.2.2.2
+ redistribute ospf 1 metric 1544 20000 255 1 1500
+ redistribute static metric 1544 20000 255 1 1500
+ no shutdown
+exit
+
+! Aplicar protocolos IPv6 a interfaces
+interface Serial0/2/0
+ ipv6 ospf 1 area 0
+exit
+
+interface GigabitEthernet0/0
+ ipv6 ospf 1 area 0
+exit
+
+interface GigabitEthernet0/1
+ ipv6 ospf 1 area 0
+exit
+
+interface Serial0/1/1
+ ipv6 eigrp 100
+exit
+
+interface Serial0/1/0
+ ipv6 eigrp 100
+exit
+
+interface Serial0/0/1
+ ipv6 eigrp 100
+exit
+
+! Rutas estáticas de respaldo
+ip route 192.168.1.0 255.255.255.0 192.168.200.6 100
+ipv6 route 2001:DB8:3100:1::/64 2001:DB8:200:2::2 100
+ipv6 route 2001:DB8:3200:1::/64 2001:DB8:200:2::2 100
+ipv6 route 2001:DB8:3300:1::/64 2001:DB8:200:2::2 100
+ipv6 route 2001:DB8:3400:1::/64 2001:DB8:200:2::2 100
+
+end
+copy running-config startup-config

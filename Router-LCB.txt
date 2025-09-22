@@ -15,27 +15,17 @@ crypto key generate rsa general-keys modulus 1024
 access-list 10 permit 192.168.5.192 0.0.0.63
 access-list 10 deny any
 
-ip ssh version 2
-service ssh
-
 ! LÍNEAS VTY CON RESTRICCIÓN ACL
-line vty 0 4
+line vty 0 15
  login local
- transport input ssh telnet
+ transport input ssh
  access-class 10 in
  privilege level 15
  exit
 
-line vty 5 15
- login local
- transport input ssh telnet
- access-class 10 in
- privilege level 15
- exit
 line con 0
  login local
  exit
-
 
 
 interface Serial0/0/0

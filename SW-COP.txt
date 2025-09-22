@@ -3,6 +3,7 @@
 !================================================
 en
 conf t
+ipv6 unicast-routing
 hostname SW-COP
 banner motd # GRUPO ARRIETA COPAN SWITCH - SOLO ACCESO AUTORIZADO #
 ip domain-name arrieta.hn
@@ -35,71 +36,43 @@ interface GigabitEthernet0/1
  description ENLACE-ROUTER-COPAN
  switchport mode trunk
  switchport trunk allowed vlan 100,200,300,400
- switchport trunk native vlan 999
  no shutdown
 exit
 
 ! Puertos de acceso VLAN 100 (FINANZAS)
-interface range FastEthernet0/1-5
+interface FastEthernet0/1
  description LOGISTICA-VLAN100
  switchport mode access
  switchport access vlan 100
- switchport port-security
- switchport port-security maximum 2
- switchport port-security mac-address sticky
- switchport port-security violation shutdown
- spanning-tree portfast
  no shutdown
 exit
 
 ! Puertos de acceso VLAN 200 (SERVICIO AL CLIENTE)
-interface range FastEthernet0/6-10
+interface FastEthernet0/2
  description SOPORTE_TECNICO-VLAN200
  switchport mode access
  switchport access vlan 200
- switchport port-security
- switchport port-security maximum 2
- switchport port-security mac-address sticky
- switchport port-security violation shutdown
- spanning-tree portfast
  no shutdown
 exit
 
 ! Puertos de acceso VLAN 300 (SISTEMAS)
-interface range FastEthernet0/11-15
+interface FastEthernet0/3
  description DESARROLLO_DE_SOFTWARE-VLAN300
  switchport mode access
  switchport access vlan 300
- switchport port-security
- switchport port-security maximum 2
- switchport port-security mac-address sticky
- switchport port-security violation shutdown
- spanning-tree portfast
  no shutdown
 exit
 
 ! Puertos de acceso VLAN 400 (ADMINISTRACION)
-interface range FastEthernet0/16-20
+interface FastEthernet0/4
  description ADMINISTRACION-VLAN400
  switchport mode access
  switchport access vlan 400
- switchport port-security
- switchport port-security maximum 2
- switchport port-security mac-address sticky
- switchport port-security violation shutdown
- spanning-tree portfast
- no shutdown
-exit
-
-! SVI para administración
-interface vlan 300
- ip address 192.168.4.130 255.255.255.192
- ipv6 address 2001:db8:3000:4::130/64
  no shutdown
 exit
 
 ! Gateway por defecto
-ip default-gateway 192.168.4.129
+ip default-gateway 192.168.4.193
 
 end
 copy running-config startup-config
