@@ -151,4 +151,3 @@ ipv6 route ::/0 2001:db8:4000:199:1::1
 
 end
 copy running-config startup-config
-
